@@ -31,35 +31,53 @@ export class HathiTrustComponent implements OnInit {
   constructor(private hathiTrustService: HathiTrustService) {}
 
   ngOnInit(): void {
-    this.findFullText();
+    if (isLocal(this.searchResult)) this.findFullText();
   }
 
   private findFullText() {
-    //    const oclcNums = getOclcNums(this.searchResult);
     const query = createQuery(this.searchResult);
-    //if (oclcNums) {
-    //  const query = new HathiTrustQuery({ oclc: oclcNums });
     this.fullTextUrl$ = this.hathiTrustService
       .find(query)
       .pipe(map((r) => r.findFullViewUrl()));
-    //}
   }
 }
 
 function createQuery(doc: Doc) {
-  const oclc = getOclcNums(doc);
-  const [isbn, issn, lccn] = ['isbn', 'issn', 'lccn'].map(
-    (id) => doc.pnx.addata[id] ?? []
-  );
-  return new HathiTrustQuery({ oclc, isbn, issn, lccn });
+  //const oclc = getOclc(doc);
+  const oclc = getAddata(doc, 'oclcid').flatMap(oclcFilter);
+  const [isbn, issn] = getAddata(doc, 'isbn', 'issn');
+  return new HathiTrustQuery({ oclc, isbn, issn });
 }
 
-function removeSystemControllPrefix(s: string): string {
-  return s.replace(/\([a-zA-Z]+\)/, '');
+function isLocal(doc: Doc): boolean {
+  return doc.context === 'L';
 }
 
-function getOclcNums(doc: Doc): string[] {
-  return doc.pnx.addata['oclcid']?.map(removeSystemControllPrefix) ?? [];
+// some institutions have a leading ocm|ocn|on without "(OCoLC)" prefix
+const OCLC_PATTERN = /^(?:\(ocolc\)|(?:ocm|ocn|on))(?<id>\w+)/i;
+
+function isOclcNum(s: string): boolean {
+  return OCLC_PATTERN.test(s);
+}
+
+function extractOclcNum(s: string): string | undefined {
+  return OCLC_PATTERN.exec(s)?.groups?.['id'];
+}
+
+function oclcFilter(ids: string[]): string[] {
+  return ids.filter(isOclcNum).map(extractOclcNum) as string[];
+}
+
+function getOclc(doc: Doc): string[] {
+  //return doc.pnx.addata["oclcid"]
+  return getAddata(doc, 'oclcid')
+    .flat()
+    ?.filter(isOclcNum)
+    .map(extractOclcNum) as string[];
+}
+
+function getAddata(doc: Doc, ...vals: string[]): string[][] {
+  return vals.map((v) => doc.pnx.addata[v] ?? []);
 }
 
 /*
