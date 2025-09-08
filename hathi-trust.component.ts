@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { HathiTrustQuery, HathiTrustResponse } from './hathi-trust.model';
-import { Doc } from '../nde/models/search.model';
-import { Observable, map } from 'rxjs';
-import { HathiTrustService } from './hathi-trust.service';
+import { Component, Input, OnInit } from "@angular/core";
+import { HathiTrustQuery, HathiTrustResponse } from "./hathi-trust.model";
+import { Doc } from "./search.model";
+import { Observable, map } from "rxjs";
+import { HathiTrustService } from "./hathi-trust.service";
+import { AsyncPipe } from "@angular/common";
 
 const config = {
   diableWhenAvailableOnline: true,
@@ -12,26 +13,29 @@ const config = {
     oclc: true,
     isbn: false,
     issb: false,
-    lccn: false,
   },
 };
 
-// TODO: consider adding the links to the store
 
 @Component({
-  selector: 'custom-hathi-trust',
-  templateUrl: './hathi-trust.component.html',
-  styleUrls: ['./hathi-trust.component.scss'],
+  standalone: true,
+  imports: [AsyncPipe],
+  selector: "custom-hathi-trust",
+  templateUrl: "./hathi-trust.component.html",
+  styleUrls: ["./hathi-trust.component.scss"],
 })
 export class HathiTrustComponent implements OnInit {
-  searchResult!: Doc; // injected by SearchResultItemContainerComponent
-  resultNumber!: number; // injected by SearchResultItemContainerComponent
+  @Input() private hostComponent!: any;
   fullTextUrl$?: Observable<string | undefined>;
 
   constructor(private hathiTrustService: HathiTrustService) {}
 
   ngOnInit(): void {
     if (isLocal(this.searchResult)) this.findFullText();
+  }
+
+  private get searchResult(): Doc {
+    return this.hostComponent.searchResult;
   }
 
   private findFullText() {
@@ -43,14 +47,13 @@ export class HathiTrustComponent implements OnInit {
 }
 
 function createQuery(doc: Doc) {
-  //const oclc = getOclc(doc);
-  const oclc = getAddata(doc, 'oclcid').flatMap(oclcFilter);
-  const [isbn, issn] = getAddata(doc, 'isbn', 'issn');
+  const oclc = getAddata(doc, "oclcid").flatMap(oclcFilter);
+  const [isbn, issn] = getAddata(doc, "isbn", "issn");
   return new HathiTrustQuery({ oclc, isbn, issn });
 }
 
 function isLocal(doc: Doc): boolean {
-  return doc.context === 'L';
+  return doc.context === "L";
 }
 
 // some institutions have a leading ocm|ocn|on without "(OCoLC)" prefix
@@ -61,7 +64,7 @@ function isOclcNum(s: string): boolean {
 }
 
 function extractOclcNum(s: string): string | undefined {
-  return OCLC_PATTERN.exec(s)?.groups?.['id'];
+  return OCLC_PATTERN.exec(s)?.groups?.["id"];
 }
 
 function oclcFilter(ids: string[]): string[] {
@@ -70,7 +73,7 @@ function oclcFilter(ids: string[]): string[] {
 
 function getOclc(doc: Doc): string[] {
   //return doc.pnx.addata["oclcid"]
-  return getAddata(doc, 'oclcid')
+  return getAddata(doc, "oclcid")
     .flat()
     ?.filter(isOclcNum)
     .map(extractOclcNum) as string[];

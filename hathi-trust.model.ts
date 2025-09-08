@@ -2,7 +2,6 @@ export class HathiTrustQuery {
   readonly oclc: ReadonlyArray<string> | undefined;
   readonly isbn: ReadonlyArray<string> | undefined;
   readonly issn: ReadonlyArray<string> | undefined;
-  readonly lccn: ReadonlyArray<string> | undefined;
 
   constructor(query: Partial<HathiTrustQuery>) {
     this.validate(query);
@@ -16,7 +15,7 @@ export class HathiTrustQuery {
   }
 
   private validate(query: Partial<HathiTrustQuery>) {
-    const validIds = ['oclc', 'isbn', 'issn', 'lccn'];
+    const validIds = ['oclc', 'isbn', 'issn'];
     const hasAtLeastOneId = validIds.some((id) => Object.hasOwn(query, id));
     if (!hasAtLeastOneId) {
       throw new Error(

@@ -1,5 +1,7 @@
-<ng-container *ngIf="fullTextUrl$ | async as url">
-  <a href="{{ url }}" class="custom-nde-theme mdc-button"
-    >Full text from HathiTrust</a
-  >
-</ng-container>
+@if (fullTextUrl$ | async; as url) {
+  <ng-container>
+    <a href="{{ url }}" class="custom-nde-theme mdc-button"
+      >Full text from HathiTrust</a
+    >
+  </ng-container>
+}
