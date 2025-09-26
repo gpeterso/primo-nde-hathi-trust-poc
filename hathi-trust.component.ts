@@ -1,9 +1,19 @@
-import { Component, Input, OnInit } from "@angular/core";
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  Input,
+  OnInit,
+} from "@angular/core";
 import { HathiTrustQuery, HathiTrustResponse } from "./hathi-trust.model";
 import { Doc } from "./search.model";
-import { Observable, map } from "rxjs";
+import { Observable, map, tap } from "rxjs";
 import { HathiTrustService } from "./hathi-trust.service";
-import { AsyncPipe } from "@angular/common";
+import { AsyncPipe, CommonModule } from "@angular/common";
+import { MatButtonModule } from "@angular/material/button";
+import { MatIconModule } from "@angular/material/icon";
 
 const config = {
   diableWhenAvailableOnline: true,
@@ -16,26 +26,33 @@ const config = {
   },
 };
 
-
 @Component({
   standalone: true,
-  imports: [AsyncPipe],
+  imports: [AsyncPipe, MatButtonModule, CommonModule],
   selector: "custom-hathi-trust",
   templateUrl: "./hathi-trust.component.html",
   styleUrls: ["./hathi-trust.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HathiTrustComponent implements OnInit {
-  @Input() private hostComponent!: any;
-  fullTextUrl$?: Observable<string | undefined>;
-
-  constructor(private hathiTrustService: HathiTrustService) {}
+  //  @Input({ required: true }) private hostComponent!: {searchResult: Doc};
+  //readonly hostComponent: any = input();
+  @Input() hostComponent!: any;
+  private hathiTrustService = inject(HathiTrustService);
+  protected fullTextUrl$?: Observable<string | undefined>;
 
   ngOnInit(): void {
     if (isLocal(this.searchResult)) this.findFullText();
   }
 
   private get searchResult(): Doc {
-    return this.hostComponent.searchResult;
+    if ("searchResult" in this.hostComponent) {
+      return this.hostComponent.searchResult as Doc;
+    } else {
+      throw new Error(
+        `Missing expected searchResult in hostComponent: ${this.hostComponent}`
+      );
+    }
   }
 
   private findFullText() {
@@ -69,14 +86,6 @@ function extractOclcNum(s: string): string | undefined {
 
 function oclcFilter(ids: string[]): string[] {
   return ids.filter(isOclcNum).map(extractOclcNum) as string[];
-}
-
-function getOclc(doc: Doc): string[] {
-  //return doc.pnx.addata["oclcid"]
-  return getAddata(doc, "oclcid")
-    .flat()
-    ?.filter(isOclcNum)
-    .map(extractOclcNum) as string[];
 }
 
 function getAddata(doc: Doc, ...vals: string[]): string[][] {
