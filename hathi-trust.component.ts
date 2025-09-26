@@ -9,11 +9,20 @@ import {
 } from "@angular/core";
 import { HathiTrustQuery, HathiTrustResponse } from "./hathi-trust.model";
 import { Doc } from "./search.model";
-import { Observable, map, tap } from "rxjs";
+import {
+  Observable,
+  map,
+  tap,
+  combineLatest,
+  zip,
+  Subject,
+  BehaviorSubject,
+} from "rxjs";
 import { HathiTrustService } from "./hathi-trust.service";
 import { AsyncPipe, CommonModule } from "@angular/common";
 import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
+import { selectFullDisplayRecord } from "./full-display.selector";
+import { Store } from "@ngrx/store";
 
 const config = {
   diableWhenAvailableOnline: true,
@@ -38,11 +47,26 @@ export class HathiTrustComponent implements OnInit {
   //  @Input({ required: true }) private hostComponent!: {searchResult: Doc};
   //readonly hostComponent: any = input();
   @Input() hostComponent!: any;
+  private store = inject(Store);
   private hathiTrustService = inject(HathiTrustService);
-  protected fullTextUrl$?: Observable<string | undefined>;
+  private fullTextSubject = new BehaviorSubject<string | undefined>(undefined);
+  //protected fullTextUrl$?: Observable<string | undefined>;
+  protected fullDisplayRecord$?: Observable<Doc | undefined>;
+  protected fullTextUrl$ = this.fullTextSubject.asObservable();
 
   ngOnInit(): void {
     if (isLocal(this.searchResult)) this.findFullText();
+    this.fullDisplayRecord$ = this.store.select(selectFullDisplayRecord);
+    //console.debug("HT: ", this)
+    this.fullDisplayRecord$.subscribe((record) => {
+      if (record) {
+        if (isLocal(record)) {
+          this.findFullText(record);
+        } else {
+          this.fullTextSubject.next(undefined);
+        }
+      }
+    });
   }
 
   private get searchResult(): Doc {
@@ -55,11 +79,15 @@ export class HathiTrustComponent implements OnInit {
     }
   }
 
-  private findFullText() {
-    const query = createQuery(this.searchResult);
-    this.fullTextUrl$ = this.hathiTrustService
+  private findFullText(doc = this.searchResult) {
+    const query = createQuery(doc);
+    this.hathiTrustService
       .find(query)
-      .pipe(map((r) => r.findFullViewUrl()));
+      .pipe(
+        map((r) => r.findFullViewUrl()),
+        map((url) => this.fullTextSubject.next(url))
+      )
+      .subscribe();
   }
 }
 
