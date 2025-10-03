@@ -8,16 +8,18 @@ interface SearchState {
   entities: { [key: string]: any };
 }
 
-const selectFullDisplay =
-  createFeatureSelector<FullDisplayState>("full-display");
-const selectSearchState = createFeatureSelector<SearchState>("Search");
-const selectFullDisplayRecordId = createSelector(
-  selectFullDisplay,
-  (fullDisplay: FullDisplayState) => fullDisplay?.selectedRecordId ?? null
+const fullDisplay = createFeatureSelector<FullDisplayState>("full-display");
+const searchFeature = createFeatureSelector<SearchState>("Search");
+
+export const fullDisplayRecordId = createSelector(
+  fullDisplay,
+  (fullDisplay) => fullDisplay?.selectedRecordId ?? null
+  //(fullDisplay) => fullDisplay.selectedRecordId
 );
+
 export const selectFullDisplayRecord = createSelector(
-  selectFullDisplayRecordId,
-  selectSearchState,
+  fullDisplayRecordId,
+  searchFeature,
   (recordId: string | null, searchState: SearchState) =>
     recordId ? searchState.entities[recordId] : null
 );
