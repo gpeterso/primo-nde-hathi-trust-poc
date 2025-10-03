@@ -12,12 +12,6 @@ import {
   HathiTrustResponse,
 } from "./hathi-trust.model";
 
-/*
-const FETCH_CACHE = new HttpContextToken<RequestCache>(() => 'default');
-const httpContext = new HttpContext();
-httpContext.set(FETCH_CACHE, "force-cache");
-*/
-
 const BASE_URL = "https://catalog.hathitrust.org/api/volumes/brief/json/";
 
 const responseExtractor =
@@ -30,10 +24,6 @@ const responseExtractor =
 })
 export class HathiTrustService {
   private http: HttpClient = inject(HttpClient);
-
-  constructor(httpBackend: HttpBackend) {
-    //this.http = new HttpClient(httpBackend);
-  }
 
   find(query: HathiTrustQuery): Observable<HathiTrustResponse> {
     return this.http
