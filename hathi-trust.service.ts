@@ -1,13 +1,24 @@
-import { HttpBackend, HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable, tap, map } from 'rxjs';
+import {
+  HttpBackend,
+  HttpClient,
+  HttpContext,
+  HttpContextToken,
+} from "@angular/common/http";
+import { inject, Injectable } from "@angular/core";
+import { Observable, tap, map } from "rxjs";
 import {
   HathiTrustMultiIdResponse,
   HathiTrustQuery,
   HathiTrustResponse,
-} from './hathi-trust.model';
+} from "./hathi-trust.model";
 
-const BASE_URL = 'https://catalog.hathitrust.org/api/volumes/brief/json/';
+/*
+const FETCH_CACHE = new HttpContextToken<RequestCache>(() => 'default');
+const httpContext = new HttpContext();
+httpContext.set(FETCH_CACHE, "force-cache");
+*/
+
+const BASE_URL = "https://catalog.hathitrust.org/api/volumes/brief/json/";
 
 const responseExtractor =
   (query: HathiTrustQuery) =>
@@ -15,13 +26,13 @@ const responseExtractor =
     response[query.toString()];
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: "root",
 })
 export class HathiTrustService {
-  private http: HttpClient;
+  private http: HttpClient = inject(HttpClient);
 
   constructor(httpBackend: HttpBackend) {
-    this.http = new HttpClient(httpBackend);
+    //this.http = new HttpClient(httpBackend);
   }
 
   find(query: HathiTrustQuery): Observable<HathiTrustResponse> {
