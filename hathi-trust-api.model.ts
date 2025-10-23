@@ -1,7 +1,9 @@
+export type HathiTrustQueryId = 'oclc' | 'isbn' | 'issn';
+
 export class HathiTrustQuery {
-  readonly oclc: ReadonlyArray<string> | undefined;
-  readonly isbn: ReadonlyArray<string> | undefined;
-  readonly issn: ReadonlyArray<string> | undefined;
+  readonly oclc?: ReadonlyArray<string>;
+  readonly isbn?: ReadonlyArray<string>;
+  readonly issn?: ReadonlyArray<string>;
 
   constructor(query: Partial<HathiTrustQuery>) {
     this.validate(query);
@@ -10,13 +12,14 @@ export class HathiTrustQuery {
 
   toString(): string {
     return Object.entries(this)
+      .filter(([_, values]) => values?.length > 0)
       .flatMap(([key, values]) => values.map((val: string) => `${key}:${val}`))
       .join(';');
   }
 
   private validate(query: Partial<HathiTrustQuery>) {
-    const validIds = ['oclc', 'isbn', 'issn'];
-    const hasAtLeastOneId = validIds.some((id) => Object.hasOwn(query, id));
+    const validIds: HathiTrustQueryId[] = ['oclc', 'isbn', 'issn'];
+    const hasAtLeastOneId = validIds.some((id) => query[id] && query[id].length > 0);
     if (!hasAtLeastOneId) {
       throw new Error(
         'HathiTrustQuery must have at least one of the following: ' +

@@ -37,7 +37,7 @@ function isLocal(doc: Doc): boolean {
   imports: [AsyncPipe, HathiTrustLinkComponent],
   selector: "custom-hathi-trust",
   template: `
-    @if (fullTextUrl$ | async; as url) { 
+    @if (fullTextUrl$ | async; as url) {
       <custom-hathi-trust-link [url]="url" />
     }
   `,

@@ -1,17 +1,14 @@
-import {
-  HttpBackend,
-  HttpClient,
-  HttpContext,
-  HttpContextToken,
-} from "@angular/common/http";
+import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
-import { Observable, tap, map } from "rxjs";
+import { Observable, map, of } from "rxjs";
 import {
   HathiTrustMultiIdResponse,
   HathiTrustQuery,
   HathiTrustResponse,
+  HathiTrustQueryId,
 } from "./hathi-trust-api.model";
 import { Doc } from "./search.model";
+import { HathiTrustConfigService } from "./hathi-trust-config.service";
 
 const BASE_URL = "https://catalog.hathitrust.org/api/volumes/brief/json/";
 
@@ -25,6 +22,7 @@ const responseExtractor =
 })
 export class HathiTrustService {
   private http: HttpClient = inject(HttpClient);
+  private conifg = inject(HathiTrustConfigService);
 
   find(query: HathiTrustQuery): Observable<HathiTrustResponse> {
     return this.http
@@ -37,15 +35,25 @@ export class HathiTrustService {
   }
 
   findFullTextFor(searchResult: Doc) {
-    const query = createQuery(searchResult);
+    const query = this.createQuery(searchResult);
+    if ((!query)) return of(undefined)
     return this.findFullText(query);
   }
-}
 
-function createQuery(doc: Doc) {
-  const oclc = getAddata(doc, "oclcid").flatMap(oclcFilter);
-  const [isbn, issn] = getAddata(doc, "isbn", "issn");
-  return new HathiTrustQuery({ oclc, isbn, issn });
+  private createQuery(doc: Doc) {
+    const ids: { [key in HathiTrustQueryId]?: string[] } = {};
+    if (this.conifg.matchOn.oclc)
+      ids.oclc = getAddata(doc, "oclcid").flatMap(oclcFilter);
+    if (this.conifg.matchOn.isbn)
+      [ids.isbn] = getAddata(doc, "isbn");
+    if (this.conifg.matchOn.issn)
+      [ids.issn] = getAddata(doc, "issn");
+    if (Object.values(ids).some((arr) => arr?.length > 0)) {
+      return new HathiTrustQuery(ids);
+    } else {
+      return undefined;
+    }
+  }
 }
 
 // some institutions have a leading ocm|ocn|on without "(OCoLC)" prefix
