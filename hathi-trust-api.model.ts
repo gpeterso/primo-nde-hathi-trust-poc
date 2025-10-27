@@ -1,4 +1,4 @@
-export type HathiTrustQueryId = 'oclc' | 'isbn' | 'issn';
+export type HathiTrustQueryId = "oclc" | "isbn" | "issn";
 
 export class HathiTrustQuery {
   readonly oclc?: ReadonlyArray<string>;
@@ -14,16 +14,18 @@ export class HathiTrustQuery {
     return Object.entries(this)
       .filter(([_, values]) => values?.length > 0)
       .flatMap(([key, values]) => values.map((val: string) => `${key}:${val}`))
-      .join(';');
+      .join(";");
   }
 
   private validate(query: Partial<HathiTrustQuery>) {
-    const validIds: HathiTrustQueryId[] = ['oclc', 'isbn', 'issn'];
-    const hasAtLeastOneId = validIds.some((id) => query[id] && query[id].length > 0);
+    const validIds: HathiTrustQueryId[] = ["oclc", "isbn", "issn"];
+    const hasAtLeastOneId = validIds.some(
+      (id) => query[id] && query[id].length > 0
+    );
     if (!hasAtLeastOneId) {
       throw new Error(
-        'HathiTrustQuery must have at least one of the following: ' +
-          validIds.join(', ')
+        "HathiTrustQuery must have at least one of the following: " +
+          validIds.join(", ")
       );
     }
   }
@@ -39,14 +41,21 @@ export class HathiTrustResponse {
     return Object.assign(new HathiTrustResponse(), response);
   }
 
-  findFullViewUrl(): string | undefined {
-    const item = this.findFullViewItem();
+  /**
+   * Finds the URL for a HathiTrust record, optionally ignoring copyright status.
+   * @param ignoreCopyright If true, returns the URL of the first item regardless
+   * of copyright status. Otherwise, returns the URL of the first item with a
+   * "Full View" usRightsString.
+   * @returns The full-view URL if available, otherwise undefined.
+   */
+  findFullViewUrl({ignoreCopyright = false} = {}): string | undefined {
+    const item = ignoreCopyright ? this.items[0] : this.findFullViewItem();
     return item ? this.records[item.fromRecord].recordURL : undefined;
   }
 
   private findFullViewItem() {
     return this.items.find(
-      (item) => item.usRightsString.toLowerCase() === 'full view'
+      (item) => item.usRightsString.toLowerCase() === "full view"
     );
   }
 }
@@ -61,7 +70,7 @@ export interface HathiTrustRecord {
 }
 
 export interface HathiTrustFullRecord extends HathiTrustRecord {
-  readonly 'marc-xml': string;
+  readonly "marc-xml": string;
 }
 
 export interface HathiTrustItem {

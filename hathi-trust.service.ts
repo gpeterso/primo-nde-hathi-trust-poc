@@ -31,23 +31,39 @@ export class HathiTrustService {
   }
 
   findFullText(query: HathiTrustQuery): Observable<string | undefined> {
-    return this.find(query).pipe(map((r) => r.findFullViewUrl()));
+    return this.find(query).pipe(
+      map((r) =>
+        // r.findFullViewUrl({ ignoreCopyright: this.conifg.ignoreCopyright })
+        r.findFullViewUrl({ ignoreCopyright: true })
+      )
+    );
   }
 
   findFullTextFor(searchResult: Doc) {
-    const query = this.createQuery(searchResult);
-    if ((!query)) return of(undefined)
-    return this.findFullText(query);
+    console.log("HathiTrustService.findFullTextFor ", searchResult);
+    let query: HathiTrustQuery | undefined;
+    if (
+      this.isEligible(searchResult) &&
+      (query = this.createQuery(searchResult))
+    ) {
+      return this.findFullText(query);
+    } else {
+      return of(undefined);
+    }
+  }
+
+  private isEligible(doc: Doc): boolean {
+    return !(
+      this.conifg.disableWhenAvailableOnline && hasOnlineAvailability(doc)
+    );
   }
 
   private createQuery(doc: Doc) {
     const ids: { [key in HathiTrustQueryId]?: string[] } = {};
     if (this.conifg.matchOn.oclc)
       ids.oclc = getAddata(doc, "oclcid").flatMap(oclcFilter);
-    if (this.conifg.matchOn.isbn)
-      [ids.isbn] = getAddata(doc, "isbn");
-    if (this.conifg.matchOn.issn)
-      [ids.issn] = getAddata(doc, "issn");
+    if (this.conifg.matchOn.isbn) [ids.isbn] = getAddata(doc, "isbn");
+    if (this.conifg.matchOn.issn) [ids.issn] = getAddata(doc, "issn");
     if (Object.values(ids).some((arr) => arr?.length > 0)) {
       return new HathiTrustQuery(ids);
     } else {
@@ -75,8 +91,9 @@ function getAddata(doc: Doc, ...vals: string[]): string[][] {
   return vals.map((v) => doc.pnx.addata[v] ?? []);
 }
 
-/*
+// TODO: FIX. The delivery prop does not exist. Likely, we'll need to grab it from the store.
 function hasOnlineAvailability(doc: Doc): boolean {
-  //doc.pnx.delivery.
+  return doc.delivery.GetIt1.some((getit) =>
+    getit.links.some((link) => link.isLinktoOnline)
+  );
 }
-*/
