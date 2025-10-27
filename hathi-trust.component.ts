@@ -3,28 +3,19 @@ import {
   Component,
   inject,
   Input,
+  InputSignal,
   OnInit,
 } from "@angular/core";
-import { Doc } from "./search.model";
+import { Doc, DocDelivery } from "./search.model";
 import { Observable, switchMap, filter } from "rxjs";
 import { HathiTrustService } from "./hathi-trust.service";
 import { AsyncPipe } from "@angular/common";
 import { FullDisplayRecordFacade } from "./full-display-record.facade";
 import { HathiTrustLinkComponent } from "./hathi-trust-link/hathi-trust-link.component";
 
-const config = {
-  diableWhenAvailableOnline: true,
-  ignoreCopyright: false,
-  // TODO: maybe just look up all by default?
-  matchOn: {
-    oclc: true,
-    isbn: false,
-    issb: false,
-  },
-};
-
 interface NdeOnlineAvailability {
   searchResult: Doc;
+  delivery: InputSignal<DocDelivery>;
   isFullDisplay: boolean;
 }
 
@@ -50,22 +41,27 @@ export class HathiTrustComponent implements OnInit {
   protected fullTextUrl$?: Observable<string | undefined>;
 
   ngOnInit(): void {
+    console.log("DELIVERY SIGNAL: ", this.delivery());
     if (!this.isFullDisplay && isLocal(this.searchResult)) {
-      this.fullTextUrl$ = this.findFullText(this.searchResult);
+      this.fullTextUrl$ = this.findFullText({...this.searchResult, delivery: this.delivery()});
     } else {
-      this.fullTextUrl$ = this.fullDisplayRecordFacade.fullDisplayRecord$.pipe(
+      this.fullTextUrl$ = this.fullDisplayRecordFacade.fullDisplayRecordWithDelivery$.pipe(
         filter(isLocal),
         switchMap((record) => this.findFullText(record))
       );
     }
   }
 
-  private get isFullDisplay() {
+  private get isFullDisplay(): boolean {
     return this.hostComponent.isFullDisplay;
   }
 
-  private get searchResult() {
+  private get searchResult(): Doc {
     return this.hostComponent.searchResult;
+  }
+
+  private get delivery(): InputSignal<DocDelivery> {
+    return this.hostComponent.delivery;
   }
 
   private findFullText(searchResult: Doc) {

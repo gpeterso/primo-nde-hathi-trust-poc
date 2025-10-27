@@ -3,6 +3,7 @@ import { Store } from "@ngrx/store";
 import {
   fullDisplayRecordId,
   selectFullDisplayRecord,
+  selectFullDisplayWithDelivery,
 } from "./full-display.selector";
 import { distinctUntilChanged, distinctUntilKeyChanged, filter, share } from "rxjs";
 
@@ -15,7 +16,16 @@ export class FullDisplayRecordFacade {
   get fullDisplayRecord$() {
     return this.store
       .select(selectFullDisplayRecord)
-      //.pipe(share(), distinctUntilChanged());
+      .pipe(
+        share(),
+        filter(val => val != null),
+        distinctUntilKeyChanged("@id"),
+      );
+  }
+
+  get fullDisplayRecordWithDelivery$() {
+    return this.store
+      .select(selectFullDisplayWithDelivery)
       .pipe(
         share(),
         filter(val => val != null),
