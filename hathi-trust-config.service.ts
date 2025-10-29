@@ -27,15 +27,15 @@ export class HathiTrustConfigService {
     return this.moduleParameters.ignoreCopyright ?? false;
   }
 
-  get matchOn(): {
-    oclc: boolean;
-    isbn: boolean;
-    issn: boolean;
-  } {
-    return this.moduleParameters.matchOn ?? {
-      oclc: true,
-      isbn: false,
-      issn: false,
-    };
+  get matchOnOclc(): boolean {
+    return this.moduleParameters.matchOn?.oclc ?? true;
+  }
+
+  get matchOnIsbn(): boolean {
+    return this.moduleParameters.matchOn?.isbn ?? false;
+  }
+
+  get matchOnIssn(): boolean {
+    return this.moduleParameters.matchOn?.issn ?? false;
   }
 }

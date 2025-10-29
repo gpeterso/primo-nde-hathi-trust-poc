@@ -1,52 +1,24 @@
-import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
-import { Observable, map, of } from "rxjs";
-import {
-  HathiTrustMultiIdResponse,
-  HathiTrustQuery,
-  HathiTrustResponse,
-  HathiTrustQueryId,
-} from "./hathi-trust-api.model";
+import { of } from "rxjs";
+import { HathiTrustQuery, HathiTrustQueryId } from "./hathi-trust-api.model";
 import { Doc } from "./search.model";
 import { HathiTrustConfigService } from "./hathi-trust-config.service";
-
-const BASE_URL = "https://catalog.hathitrust.org/api/volumes/brief/json/";
-
-const responseExtractor =
-  (query: HathiTrustQuery) =>
-  (response: HathiTrustMultiIdResponse): HathiTrustResponse =>
-    response[query.toString()];
+import { HathiTrustApiService } from "./hathi-trust-api.service";
 
 @Injectable({
   providedIn: "root",
 })
 export class HathiTrustService {
-  private http: HttpClient = inject(HttpClient);
+  private api = inject(HathiTrustApiService);
   private conifg = inject(HathiTrustConfigService);
 
-  find(query: HathiTrustQuery): Observable<HathiTrustResponse> {
-    return this.http
-      .get<HathiTrustMultiIdResponse>(BASE_URL + query)
-      .pipe(map(responseExtractor(query)), map(HathiTrustResponse.of));
-  }
-
-  findFullText(query: HathiTrustQuery): Observable<string | undefined> {
-    return this.find(query).pipe(
-      map((r) =>
-        // r.findFullViewUrl({ ignoreCopyright: this.conifg.ignoreCopyright })
-        r.findFullViewUrl({ ignoreCopyright: true })
-      )
-    );
-  }
-
   findFullTextFor(searchResult: Doc) {
-    console.log("HathiTrustService.findFullTextFor ", searchResult);
     let query: HathiTrustQuery | undefined;
     if (
       this.isEligible(searchResult) &&
       (query = this.createQuery(searchResult))
     ) {
-      return this.findFullText(query);
+      return this.api.findFullTextUrl(query);
     } else {
       return of(undefined);
     }
@@ -58,12 +30,12 @@ export class HathiTrustService {
     );
   }
 
-  private createQuery(doc: Doc) {
+  private createQuery(doc: Doc): HathiTrustQuery | undefined {
     const ids: { [key in HathiTrustQueryId]?: string[] } = {};
-    if (this.conifg.matchOn.oclc)
+    if (this.conifg.matchOnOclc)
       ids.oclc = getAddata(doc, "oclcid").flatMap(oclcFilter);
-    if (this.conifg.matchOn.isbn) [ids.isbn] = getAddata(doc, "isbn");
-    if (this.conifg.matchOn.issn) [ids.issn] = getAddata(doc, "issn");
+    if (this.conifg.matchOnIsbn) [ids.isbn] = getAddata(doc, "isbn");
+    if (this.conifg.matchOnIssn) [ids.issn] = getAddata(doc, "issn");
     if (Object.values(ids).some((arr) => arr?.length > 0)) {
       return new HathiTrustQuery(ids);
     } else {
@@ -91,7 +63,6 @@ function getAddata(doc: Doc, ...vals: string[]): string[][] {
   return vals.map((v) => doc.pnx.addata[v] ?? []);
 }
 
-// TODO: FIX. The delivery prop does not exist. Likely, we'll need to grab it from the store.
 function hasOnlineAvailability(doc: Doc): boolean {
   return doc.delivery.GetIt1.some((getit) =>
     getit.links.some((link) => link.isLinktoOnline)
