@@ -23,7 +23,7 @@ export class FullDisplayRecordFacade {
       );
   }
 
-  get fullDisplayRecordWithDelivery$() {
+  get currentRecordWithDelivery$() {
     return this.store
       .select(selectFullDisplayWithDelivery)
       .pipe(

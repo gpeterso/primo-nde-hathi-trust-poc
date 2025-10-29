@@ -25,30 +25,33 @@ function isLocal(doc: Doc): boolean {
 
 @Component({
   standalone: true,
-  imports: [AsyncPipe, HathiTrustLinkComponent],
   selector: "custom-hathi-trust",
+  imports: [AsyncPipe, HathiTrustLinkComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (fullTextUrl$ | async; as url) {
-      <custom-hathi-trust-link [url]="url" />
+    <custom-hathi-trust-link [url]="url" />
     }
   `,
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HathiTrustComponent implements OnInit {
   @Input() hostComponent!: NdeOnlineAvailability;
+  fullTextUrl$?: Observable<string | undefined>;
   private hathiTrustService = inject(HathiTrustService);
   private fullDisplayRecordFacade = inject(FullDisplayRecordFacade);
-  protected fullTextUrl$?: Observable<string | undefined>;
 
   ngOnInit(): void {
-    console.log("DELIVERY SIGNAL: ", this.delivery());
     if (!this.isFullDisplay && isLocal(this.searchResult)) {
-      this.fullTextUrl$ = this.findFullText({...this.searchResult, delivery: this.delivery()});
+      this.fullTextUrl$ = this.findFullText({
+        ...this.searchResult,
+        delivery: this.delivery(),
+      });
     } else {
-      this.fullTextUrl$ = this.fullDisplayRecordFacade.fullDisplayRecordWithDelivery$.pipe(
-        filter(isLocal),
-        switchMap((record) => this.findFullText(record))
-      );
+      this.fullTextUrl$ =
+        this.fullDisplayRecordFacade.currentRecordWithDelivery$.pipe(
+          filter(isLocal),
+          switchMap((record) => this.findFullText(record))
+        );
     }
   }
 
