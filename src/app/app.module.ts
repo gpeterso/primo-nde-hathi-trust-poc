@@ -7,6 +7,7 @@ import {selectorComponentMap} from "./custom1-module/customComponentMappings";
 import {TranslateModule} from "@ngx-translate/core";
 import { CommonModule } from '@angular/common';
 import { AutoAssetSrcDirective } from './services/auto-asset-src.directive';
+import { provideHttpClient } from '@angular/common/http';
 
 export const AppModule = ({providers}: {providers:any}) => {
    @NgModule({
@@ -20,7 +21,7 @@ export const AppModule = ({providers}: {providers:any}) => {
       CommonModule,
       TranslateModule.forRoot({})
     ],
-    providers: providers,
+    providers: [...providers, provideHttpClient()],
     bootstrap: []
   })
   class AppModule implements DoBootstrap{
