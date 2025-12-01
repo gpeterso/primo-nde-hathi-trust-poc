@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { HathiTrustComponent } from "./hathi-trust.component";
 import { of } from "rxjs";
 import { HathiTrustService } from "./hathi-trust.service";
-import { FullDisplayRecordFacade } from "./full-display-record.facade";
+import { FullDisplayRecordFacade } from "../search-result/full-display-record.facade";
 import { HathiTrustLinkComponent } from "./hathi-trust-link/hathi-trust-link.component";
 import { By } from "@angular/platform-browser";
 

@@ -1,11 +1,10 @@
 import { inject, Injectable } from "@angular/core";
 import { Store } from "@ngrx/store";
 import {
-  fullDisplayRecordId,
   selectFullDisplayRecord,
   selectFullDisplayWithDelivery,
 } from "./full-display.selector";
-import { distinctUntilChanged, distinctUntilKeyChanged, filter, share } from "rxjs";
+import { distinctUntilKeyChanged, filter, share } from "rxjs";
 
 @Injectable({
   providedIn: "root",

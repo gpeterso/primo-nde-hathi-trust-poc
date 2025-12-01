@@ -6,11 +6,11 @@ import {
   InputSignal,
   OnInit,
 } from "@angular/core";
-import { Doc, DocDelivery } from "./search.model";
+import { Doc, DocDelivery } from "../search-result/search.model";
 import { Observable, switchMap, filter } from "rxjs";
 import { HathiTrustService } from "./hathi-trust.service";
 import { AsyncPipe } from "@angular/common";
-import { FullDisplayRecordFacade } from "./full-display-record.facade";
+import { FullDisplayRecordFacade } from "../search-result/full-display-record.facade";
 import { HathiTrustLinkComponent } from "./hathi-trust-link/hathi-trust-link.component";
 
 interface NdeOnlineAvailability {
