@@ -4,7 +4,7 @@ import {
   selectFullDisplayRecord,
   selectFullDisplayWithDelivery,
 } from "./full-display.selector";
-import { distinctUntilKeyChanged, filter, share } from "rxjs";
+import { distinctUntilKeyChanged, filter } from "rxjs";
 
 @Injectable({
   providedIn: "root",
@@ -16,7 +16,6 @@ export class FullDisplayRecordFacade {
     return this.store
       .select(selectFullDisplayRecord)
       .pipe(
-        share(),
         filter(val => val != null),
         distinctUntilKeyChanged("@id"),
       );
@@ -26,7 +25,6 @@ export class FullDisplayRecordFacade {
     return this.store
       .select(selectFullDisplayWithDelivery)
       .pipe(
-        share(),
         filter(val => val != null),
         distinctUntilKeyChanged("@id"),
       );
