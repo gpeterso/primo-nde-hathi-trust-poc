@@ -2,6 +2,7 @@ import { Inject, inject, Injectable } from "@angular/core";
 
 interface HathiTrustModuleParameters {
   disableWhenAvailableOnline: boolean;
+  disableForJournals: boolean;
   ignoreCopyright: boolean;
   matchOn: {
     oclc: boolean;
@@ -23,6 +24,10 @@ export class HathiTrustConfigService {
     return this.moduleParameters.disableWhenAvailableOnline ?? true;
   }
 
+  get disableForJournals(): boolean {
+    return this.moduleParameters.disableForJournals ?? false;
+  }
+
   get ignoreCopyright(): boolean {
     return this.moduleParameters.ignoreCopyright ?? false;
   }
@@ -39,3 +44,6 @@ export class HathiTrustConfigService {
     return this.moduleParameters.matchOn?.issn ?? false;
   }
 }
+
+// TODO: add label lookup
+// TODO: add tests

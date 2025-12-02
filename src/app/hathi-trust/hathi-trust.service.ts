@@ -27,6 +27,8 @@ export class HathiTrustService {
   private isEligible(doc: Doc): boolean {
     return !(
       this.conifg.disableWhenAvailableOnline && hasOnlineAvailability(doc)
+    ) && !(
+      this.conifg.disableForJournals && isJournal(doc)
     );
   }
 
@@ -66,5 +68,11 @@ function getAddata(doc: Doc, ...vals: string[]): string[][] {
 function hasOnlineAvailability(doc: Doc): boolean {
   return doc.delivery.GetIt1.some((getit) =>
     getit.links.some((link) => link.isLinktoOnline)
+  );
+}
+
+function isJournal(doc: Doc): boolean {
+  return doc.pnx.addata['format']?.some((format) =>
+    format.toLowerCase().includes("journal")
   );
 }
