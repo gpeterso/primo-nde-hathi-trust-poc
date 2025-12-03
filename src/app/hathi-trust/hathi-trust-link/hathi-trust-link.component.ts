@@ -12,5 +12,4 @@ import { MatButtonModule } from "@angular/material/button";
 })
 export class HathiTrustLinkComponent {
   url = input<string>();
-  text = input<string>();
 }
