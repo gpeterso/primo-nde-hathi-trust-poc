@@ -62,7 +62,7 @@ export class HathiTrustComponent implements OnInit {
     }
   }
 
-  get availabilityText$() {
+  get availabilityText$(): Observable<string> {
     return this.translateService.get(AVAILABILITY_TEXT_KEY).pipe(
       map((translation) => {
         return translation === AVAILABILITY_TEXT_KEY
@@ -84,7 +84,7 @@ export class HathiTrustComponent implements OnInit {
     return this.hostComponent.delivery;
   }
 
-  private findFullText(searchResult: Doc) {
+  private findFullText(searchResult: Doc): Observable<string | undefined> {
     return this.hathiTrustService.findFullTextFor(searchResult);
   }
 }
