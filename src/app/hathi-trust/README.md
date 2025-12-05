@@ -6,12 +6,12 @@
 ## TODO: 
 
 - [x] get basic functionality working
-- [ ] add "ignore copyright" support?
-- [ ] add "not online" support
-- [ ] add "not journal" support
+- [x] add "ignore copyright" support?
+- [x] add "not online" support
+- [x] add "not journal" support
 - [ ] add SAML entity id support?
-- [ ] figure out how many identifiers to support
-- [ ] experiment with updating the pnx links section in store
+- [x] figure out how many identifiers to support
+- [x] experiment with updating the pnx links section in store (possible, but there be dragons...)
 
 ## Notes
 
@@ -23,7 +23,7 @@ Other IDs that the HT API accepts:
 
 - ISBN
 - ISSN
-- LCCN
+- ~~LCCN~~
 
 For ISSN and ISBN, the main concern is CDI. Historically, relying solely on OCLC numbers implicitly limited lookups to local-only records. Perhaps we should add an explicit check for local (e.g. `doc.context === 'L'`)?
 
