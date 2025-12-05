@@ -1,32 +1,26 @@
-import { inject, Injectable } from "@angular/core";
-import { Store } from "@ngrx/store";
+import { inject, Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
 import {
   selectFullDisplayRecord,
   selectFullDisplayWithDelivery,
-} from "./full-display.selector";
-import { distinctUntilKeyChanged, filter } from "rxjs";
+} from './full-display.selector';
+import { distinctUntilKeyChanged, filter } from 'rxjs';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class FullDisplayRecordFacade {
   private store = inject(Store);
 
-  get fullDisplayRecord$() {
-    return this.store
-      .select(selectFullDisplayRecord)
-      .pipe(
-        filter(val => val != null),
-        distinctUntilKeyChanged("@id"),
-      );
-  }
+  currentRecord$ = this.store.select(selectFullDisplayRecord).pipe(
+    filter((val) => val != null),
+    distinctUntilKeyChanged('@id')
+  );
 
-  get currentRecordWithDelivery$() {
-    return this.store
-      .select(selectFullDisplayWithDelivery)
-      .pipe(
-        filter(val => val != null),
-        distinctUntilKeyChanged("@id"),
-      );
-  }
+  currentRecordWithDelivery$ = this.store
+    .select(selectFullDisplayWithDelivery)
+    .pipe(
+      filter((val) => val != null),
+      distinctUntilKeyChanged('@id')
+    );
 }

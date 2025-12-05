@@ -1,4 +1,4 @@
-import { createFeatureSelector, createSelector } from "@ngrx/store";
+import { createFeatureSelector, createSelector } from '@ngrx/store';
 
 interface FullDisplayState {
   selectedRecordId: string | null;
@@ -12,14 +12,13 @@ interface DeliveryState {
   entities: { [key: string]: any };
 }
 
-const fullDisplay = createFeatureSelector<FullDisplayState>("full-display");
-const searchFeature = createFeatureSelector<SearchState>("Search");
-const deliveryFeature = createFeatureSelector<DeliveryState>("Delivery");
+const fullDisplay = createFeatureSelector<FullDisplayState>('full-display');
+const searchFeature = createFeatureSelector<SearchState>('Search');
+const deliveryFeature = createFeatureSelector<DeliveryState>('Delivery');
 
 export const fullDisplayRecordId = createSelector(
   fullDisplay,
   (fullDisplay) => fullDisplay?.selectedRecordId ?? null
-  //(fullDisplay) => fullDisplay.selectedRecordId
 );
 
 export const selectFullDisplayRecord = createSelector(
@@ -29,7 +28,10 @@ export const selectFullDisplayRecord = createSelector(
     recordId ? searchState.entities[recordId] : null
 );
 
-export const selectFullDisplayWithDelivery = createSelector(fullDisplayRecordId ,selectFullDisplayRecord, deliveryFeature,
+export const selectFullDisplayWithDelivery = createSelector(
+  fullDisplayRecordId,
+  selectFullDisplayRecord,
+  deliveryFeature,
   (recordId: string | null, record: any, deliveryState: DeliveryState) => {
     if (recordId && record) {
       const delivery = deliveryState.entities[recordId];
