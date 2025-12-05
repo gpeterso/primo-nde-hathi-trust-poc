@@ -44,6 +44,3 @@ export class HathiTrustConfigService {
     return this.moduleParameters.matchOn?.issn ?? false;
   }
 }
-
-// TODO: add label lookup
-// TODO: add tests
