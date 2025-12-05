@@ -1,6 +1,21 @@
 # CustomModule
 
+## ✨ New Feature (9th November 2025): Support for all customization files in assets folder:
+All files that are you are able to customize through the assets folder of your customization package are now supported for preview when using the custom module in proxy mode.
+
+For example to preview your brand logo you can now place your customized logo file in the following path in your local project:
+`src/assets/images/library-logo.png`
+
+To start proxy mode use the command:
+``` bash
+npm run start:proxy
+```
+
+---
+
 ### Overview
+
+
 The NDE Customization package offers options to enhance and extend the functionality of Primo’s New Discovery Experience (NDE). You can add and develop your own components, customize theme templates, and tailor the discovery interface to your specific needs.
 
 **Note:**
@@ -63,8 +78,8 @@ The NDE Customization package is currently available exclusively to Primo custom
 
 There are two options for setting up your local development environment: configuring a proxy or using parameter on your NDE URL.
 
-- **Option 1: Update `proxy.conf.mjs` Configuration**:
-  - Set the URL of the server you want to test your code with by modifying the `proxy.conf.mjs` file in the `./proxy` directory:
+- **Option 1: Update `proxy.const.mjs` Configuration**:
+  - Set the URL of the server you want to test your code with by modifying the proxy.const.mjs file in the ./proxy directory:
     ```javascript
     // Configuration for the development proxy
     const environments = {
