@@ -7,7 +7,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { Doc, DocDelivery } from '../search-result/search.model';
-import { Observable, switchMap, filter, map } from 'rxjs';
+import { Observable, switchMap, map } from 'rxjs';
 import { HathiTrustService } from './hathi-trust.service';
 import { AsyncPipe } from '@angular/common';
 import { FullDisplayRecordFacade } from '../search-result/full-display-record.facade';
@@ -18,10 +18,6 @@ interface NdeOnlineAvailability {
   searchResult: Doc;
   delivery: InputSignal<DocDelivery>;
   isFullDisplay: boolean;
-}
-
-function isLocal(doc: Doc): boolean {
-  return doc.context === 'L';
 }
 
 const AVAILABILITY_TEXT_KEY = 'HathiTrust.availabilityText';
@@ -41,35 +37,37 @@ const DEFAULT_AVAILABILITY_TEXT = 'Full text from HathiTrust';
   `,
 })
 export class HathiTrustComponent implements OnInit {
-  @Input() hostComponent!: NdeOnlineAvailability;
-  fullTextUrl$?: Observable<string | undefined>;
   private hathiTrustService = inject(HathiTrustService);
   private fullDisplayRecordFacade = inject(FullDisplayRecordFacade);
   private translateService = inject(TranslateService);
+  @Input() hostComponent!: NdeOnlineAvailability;
+  fullTextUrl$?: Observable<string | undefined>;
 
-  ngOnInit(): void {
-    if (!this.isFullDisplay && isLocal(this.searchResult)) {
-      this.fullTextUrl$ = this.findFullText({
-        ...this.searchResult,
-        delivery: this.delivery(),
-      });
-    } else {
-      this.fullTextUrl$ =
-        this.fullDisplayRecordFacade.currentRecordWithDelivery$.pipe(
-          filter(isLocal),
-          switchMap((record) => this.findFullText(record))
-        );
-    }
-  }
-
-  get availabilityText$(): Observable<string> {
-    return this.translateService.get(AVAILABILITY_TEXT_KEY).pipe(
+  availabilityText$: Observable<string> = this.translateService
+    .get(AVAILABILITY_TEXT_KEY)
+    .pipe(
       map((translation) => {
         return translation === AVAILABILITY_TEXT_KEY
           ? DEFAULT_AVAILABILITY_TEXT
           : translation;
       })
     );
+
+  ngOnInit(): void {
+    this.fullTextUrl$ = this.findFullText();
+  }
+
+  private findFullText(): Observable<string | undefined> {
+    if (this.isFullDisplay) {
+      return this.fullDisplayRecordFacade.currentRecordWithDelivery$.pipe(
+        switchMap((record) => this.hathiTrustService.findFullTextFor(record))
+      );
+    } else {
+      return this.hathiTrustService.findFullTextFor({
+        ...this.searchResult,
+        delivery: this.delivery(),
+      });
+    }
   }
 
   private get isFullDisplay(): boolean {
@@ -82,9 +80,5 @@ export class HathiTrustComponent implements OnInit {
 
   private get delivery(): InputSignal<DocDelivery> {
     return this.hostComponent.delivery;
-  }
-
-  private findFullText(searchResult: Doc): Observable<string | undefined> {
-    return this.hathiTrustService.findFullTextFor(searchResult);
   }
 }

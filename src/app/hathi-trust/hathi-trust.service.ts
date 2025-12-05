@@ -1,12 +1,15 @@
-import { inject, Injectable } from "@angular/core";
-import { of } from "rxjs";
-import { HathiTrustQuery, HathiTrustQueryId } from "./hathi-trust-api/hathi-trust-api.model";
-import { Doc } from "../search-result/search.model";
-import { HathiTrustConfigService } from "./hathi-trust-config/hathi-trust-config.service";
-import { HathiTrustApiService } from "./hathi-trust-api/hathi-trust-api.service";
+import { inject, Injectable } from '@angular/core';
+import { of } from 'rxjs';
+import {
+  HathiTrustQuery,
+  HathiTrustQueryId,
+} from './hathi-trust-api/hathi-trust-api.model';
+import { Doc } from '../search-result/search.model';
+import { HathiTrustConfigService } from './hathi-trust-config/hathi-trust-config.service';
+import { HathiTrustApiService } from './hathi-trust-api/hathi-trust-api.service';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class HathiTrustService {
   private api = inject(HathiTrustApiService);
@@ -25,19 +28,19 @@ export class HathiTrustService {
   }
 
   private isEligible(doc: Doc): boolean {
-    return !(
-      this.conifg.disableWhenAvailableOnline && hasOnlineAvailability(doc)
-    ) && !(
-      this.conifg.disableForJournals && isJournal(doc)
+    return (
+      isLocal(doc) &&
+      !(this.conifg.disableWhenAvailableOnline && hasOnlineAvailability(doc)) &&
+      !(this.conifg.disableForJournals && isJournal(doc))
     );
   }
 
   private createQuery(doc: Doc): HathiTrustQuery | undefined {
     const ids: { [key in HathiTrustQueryId]?: string[] } = {};
     if (this.conifg.matchOnOclc)
-      ids.oclc = getAddata(doc, "oclcid").flatMap(oclcFilter);
-    if (this.conifg.matchOnIsbn) [ids.isbn] = getAddata(doc, "isbn");
-    if (this.conifg.matchOnIssn) [ids.issn] = getAddata(doc, "issn");
+      ids.oclc = getAddata(doc, 'oclcid').flatMap(oclcFilter);
+    if (this.conifg.matchOnIsbn) [ids.isbn] = getAddata(doc, 'isbn');
+    if (this.conifg.matchOnIssn) [ids.issn] = getAddata(doc, 'issn');
     if (Object.values(ids).some((arr) => arr?.length > 0)) {
       return new HathiTrustQuery(ids);
     } else {
@@ -54,7 +57,7 @@ function isOclcNum(s: string): boolean {
 }
 
 function extractOclcNum(s: string): string | undefined {
-  return OCLC_PATTERN.exec(s)?.groups?.["id"];
+  return OCLC_PATTERN.exec(s)?.groups?.['id'];
 }
 
 function oclcFilter(ids: string[]): string[] {
@@ -73,6 +76,10 @@ function hasOnlineAvailability(doc: Doc): boolean {
 
 function isJournal(doc: Doc): boolean {
   return doc.pnx.addata['format']?.some((format) =>
-    format.toLowerCase().includes("journal")
+    format.toLowerCase().includes('journal')
   );
+}
+
+function isLocal(doc: Doc): boolean {
+  return doc.context === 'L';
 }
