@@ -5,7 +5,7 @@ import {
 } from './hathi-trust.component';
 import { of } from 'rxjs';
 import { HathiTrustService } from './hathi-trust.service';
-import { FullDisplayRecordFacade } from '../search-result/full-display-record.facade';
+import { FullDisplayRecordFacade } from './primo-search-result/full-display-record.facade';
 import { HathiTrustLinkComponent } from './hathi-trust-link/hathi-trust-link.component';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';

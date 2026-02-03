@@ -6,11 +6,11 @@ import {
   InputSignal,
   OnInit,
 } from '@angular/core';
-import { Doc, DocDelivery } from '../search-result/search.model';
+import { Doc, DocDelivery } from './primo-search-result/search.model';
 import { Observable, switchMap, map } from 'rxjs';
 import { HathiTrustService } from './hathi-trust.service';
 import { AsyncPipe } from '@angular/common';
-import { FullDisplayRecordFacade } from '../search-result/full-display-record.facade';
+import { FullDisplayRecordFacade } from './primo-search-result/full-display-record.facade';
 import { HathiTrustLinkComponent } from './hathi-trust-link/hathi-trust-link.component';
 import { TranslateService } from '@ngx-translate/core';
 
