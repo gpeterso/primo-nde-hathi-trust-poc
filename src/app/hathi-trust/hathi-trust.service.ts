@@ -68,8 +68,8 @@ function getAddata(doc: Doc, ...vals: string[]): string[][] {
   return vals.map((v) => doc.pnx.addata[v] ?? []);
 }
 
-function hasOnlineAvailability(doc: Doc): boolean {
-  return doc.delivery.GetIt1.some((getit) =>
+function hasOnlineAvailability(doc: Doc): boolean | undefined {
+  return doc.delivery?.GetIt1.some((getit) =>
     getit.links.some((link) => link.isLinktoOnline)
   );
 }

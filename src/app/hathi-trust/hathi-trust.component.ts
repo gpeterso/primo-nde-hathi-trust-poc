@@ -3,20 +3,18 @@ import {
   Component,
   inject,
   Input,
-  InputSignal,
   OnInit,
 } from '@angular/core';
-import { Doc, DocDelivery } from './primo-search-result/search.model';
-import { Observable, switchMap, map } from 'rxjs';
+import { Doc } from './primo-search-result/search.model';
+import { Observable, switchMap, map, tap, iif, combineLatest, defer } from 'rxjs';
 import { HathiTrustService } from './hathi-trust.service';
 import { AsyncPipe } from '@angular/common';
-import { FullDisplayRecordFacade } from './primo-search-result/full-display-record.facade';
+import { SearchResultFacade } from './primo-search-result/search-result.facade';
 import { HathiTrustLinkComponent } from './hathi-trust-link/hathi-trust-link.component';
 import { TranslateService } from '@ngx-translate/core';
 
 interface NdeOnlineAvailability {
   searchResult: Doc;
-  delivery: InputSignal<DocDelivery>;
   isFullDisplay: boolean;
 }
 
@@ -30,19 +28,18 @@ const DEFAULT_AVAILABILITY_TEXT = 'Full text from HathiTrust';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (fullTextUrl$ | async; as url) {
-    <custom-hathi-trust-link [url]="url">
-      {{ availabilityText$ | async }}
-    </custom-hathi-trust-link>
+      <custom-hathi-trust-link [url]="url">
+        {{ availabilityText$ | async }}
+      </custom-hathi-trust-link>
     }
   `,
 })
-export class HathiTrustComponent implements OnInit {
+export class HathiTrustComponent {
   private hathiTrustService = inject(HathiTrustService);
-  private fullDisplayRecordFacade = inject(FullDisplayRecordFacade);
+  private searchResultFacade = inject(SearchResultFacade);
   private translateService = inject(TranslateService);
   @Input() hostComponent!: NdeOnlineAvailability;
-  fullTextUrl$?: Observable<string | undefined>;
-
+  fullTextUrl$: Observable<string | undefined> = this.findFullText();
   availabilityText$: Observable<string> = this.translateService
     .get(AVAILABILITY_TEXT_KEY)
     .pipe(
@@ -50,35 +47,24 @@ export class HathiTrustComponent implements OnInit {
         return translation === AVAILABILITY_TEXT_KEY
           ? DEFAULT_AVAILABILITY_TEXT
           : translation;
-      })
+      }),
     );
 
-  ngOnInit(): void {
-    this.fullTextUrl$ = this.findFullText();
-  }
-
   private findFullText(): Observable<string | undefined> {
-    if (this.isFullDisplay) {
-      return this.fullDisplayRecordFacade.currentRecordWithDelivery$.pipe(
-        switchMap((record) => this.hathiTrustService.findFullTextFor(record))
-      );
-    } else {
-      return this.hathiTrustService.findFullTextFor({
-        ...this.searchResult,
-        delivery: this.delivery(),
-      });
-    }
+    return iif(
+      () => this.isFullDisplay,
+      this.searchResultFacade.currentFullDisplay$,
+      defer(() => this.searchResultFacade.getSearchResult(this.recordId)),
+    ).pipe(
+      switchMap((record) => this.hathiTrustService.findFullTextFor(record)),
+    );
   }
 
   private get isFullDisplay(): boolean {
     return this.hostComponent.isFullDisplay;
   }
 
-  private get searchResult(): Doc {
-    return this.hostComponent.searchResult;
-  }
-
-  private get delivery(): InputSignal<DocDelivery> {
-    return this.hostComponent.delivery;
+  private get recordId(): string {
+    return this.hostComponent.searchResult.pnx.control.recordid[0];
   }
 }

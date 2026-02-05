@@ -57,7 +57,7 @@ export interface Doc {
   enrichment?: Enrichment;
   thumbnailForCD?: ThumbnailForCD;
   unpaywallStatus?: LoadingStatus;
-  delivery: DocDelivery;
+  delivery?: DocDelivery;
   expired?: boolean; // indicates the record should be reloaded
 }
 

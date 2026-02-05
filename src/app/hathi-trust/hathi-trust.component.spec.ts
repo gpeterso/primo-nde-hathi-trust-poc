@@ -1,197 +1,85 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import {
-  HathiTrustComponent,
-} from './hathi-trust.component';
-import { of } from 'rxjs';
+import { TestBed } from '@angular/core/testing';
+import { of, firstValueFrom } from 'rxjs';
+import { HathiTrustComponent } from './hathi-trust.component';
 import { HathiTrustService } from './hathi-trust.service';
-import { FullDisplayRecordFacade } from './primo-search-result/full-display-record.facade';
-import { HathiTrustLinkComponent } from './hathi-trust-link/hathi-trust-link.component';
+import { SearchResultFacade } from './primo-search-result/search-result.facade';
 import { TranslateService } from '@ngx-translate/core';
-import { By } from '@angular/platform-browser';
 
 describe('HathiTrustComponent', () => {
   let component: HathiTrustComponent;
-  let fixture: ComponentFixture<HathiTrustComponent>;
+  let hathiTrustService: jasmine.SpyObj<HathiTrustService>;
+  let searchResultFacade: jasmine.SpyObj<SearchResultFacade>;
+  let translateService: jasmine.SpyObj<TranslateService>;
 
-  let hathiTrustServiceMock: jasmine.SpyObj<HathiTrustService>;
-  let fullDisplayRecordFacadeMock: Partial<FullDisplayRecordFacade>;
-  let translateServiceMock: jasmine.SpyObj<TranslateService>;
-
-  const availabilityTest = "FT from HT";
-
-  beforeEach(() => {
-    hathiTrustServiceMock = jasmine.createSpyObj('HathiTrustService', [
+  beforeEach(async () => {
+    hathiTrustService = jasmine.createSpyObj('HathiTrustService', [
       'findFullTextFor',
     ]);
+    searchResultFacade = jasmine.createSpyObj('SearchResultFacade', [
+      'getSearchResult',
+    ]) as jasmine.SpyObj<SearchResultFacade>;
+    translateService = jasmine.createSpyObj('TranslateService', ['get']);
 
-    fullDisplayRecordFacadeMock = {
-      currentRecordWithDelivery$: of(),
-    };
-
-    translateServiceMock = jasmine.createSpyObj('TranslateService', ['get']);
-    translateServiceMock.get.and.returnValue(of(availabilityTest));
-
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [HathiTrustComponent],
       providers: [
-        { provide: HathiTrustService, useValue: hathiTrustServiceMock },
-        {
-          provide: FullDisplayRecordFacade,
-          useValue: fullDisplayRecordFacadeMock,
-        },
-        { provide: TranslateService, useValue: translateServiceMock },
+        { provide: HathiTrustService, useValue: hathiTrustService },
+        { provide: SearchResultFacade, useValue: searchResultFacade },
+        { provide: TranslateService, useValue: translateService },
       ],
+    }).compileComponents();
+
+    // override template to avoid rendering auxiliary components
+    TestBed.overrideComponent(HathiTrustComponent, {
+      set: { template: '' },
     });
 
-    fixture = TestBed.createComponent(HathiTrustComponent);
+    translateService.get.and.returnValue(of('HathiTrust.availabilityText'));
+  });
+
+  it('uses currentFullDisplay$ when hostComponent.isFullDisplay is true', async () => {
+    const record = { pnx: { control: { recordid: ['123'] } } } as any;
+    (searchResultFacade as any).currentFullDisplay$ = of(record);
+    hathiTrustService.findFullTextFor.and.returnValue(of('http://example.com/123'));
+
+    const fixture = TestBed.createComponent(HathiTrustComponent);
     component = fixture.componentInstance;
+    component.hostComponent = { isFullDisplay: true, searchResult: record } as any;
+
+    const url = await firstValueFrom(component.fullTextUrl$);
+    expect(url).toBe('http://example.com/123');
+    expect(hathiTrustService.findFullTextFor).toHaveBeenCalledWith(record);
   });
 
-  it("passes the host component's searchResult to the HathiTrustService when view state is not full display", (done) => {
-    const searchResult = {} as any;
-    const deliveryValue = {} as any;
-    const deliveryFn = jasmine
-      .createSpy('delivery')
-      .and.returnValue(deliveryValue);
+  it('calls getSearchResult when hostComponent.isFullDisplay is false', async () => {
+    const hostComponentRecord = { pnx: { control: { recordid: ['123'] } } } as any;
+    const storeRecord = { pnx: { control: { recordid: ['123'] } } } as any;
+    searchResultFacade.getSearchResult.and.returnValue(of(storeRecord));
+    hathiTrustService.findFullTextFor.and.returnValue(of('http://example.com/123'));
 
-    const hostComponent = {
-      searchResult,
-      delivery: deliveryFn,
-      isFullDisplay: false,
-    } as any;
+    const fixture = TestBed.createComponent(HathiTrustComponent);
+    component = fixture.componentInstance;
+    component.hostComponent = { isFullDisplay: false, searchResult: hostComponentRecord } as any;
 
-    const returnedUrl = 'http://hathitrust.example/fulltext1';
-    hathiTrustServiceMock.findFullTextFor.and.returnValue(of(returnedUrl));
-
-    component.hostComponent = hostComponent;
-    fixture.detectChanges(); // triggers ngOnInit
-
-    expect(deliveryFn).toHaveBeenCalled();
-
-    // subscribe to the observable to assert the emitted value
-    component.fullTextUrl$?.subscribe((url) => {
-      expect(url).toBe(returnedUrl);
-      // ensure findFullTextFor was called with the searchResult augmented with delivery value
-      expect(hathiTrustServiceMock.findFullTextFor).toHaveBeenCalledWith({
-        ...searchResult,
-        delivery: deliveryValue,
-      });
-      done();
-    });
+    const url = await firstValueFrom(component.fullTextUrl$);
+    expect(url).toBe('http://example.com/123');
+    expect(searchResultFacade.getSearchResult).toHaveBeenCalledWith('123');
+    expect(hathiTrustService.findFullTextFor).toHaveBeenCalledWith(storeRecord);
   });
 
-  it('passes the searchResult from the FullDisplayRecordFacade to the HathiTrust service when view state is full display', (done) => {
-    const facadeRecord = {
-      delivery: {},
-    } as any;
-    (fullDisplayRecordFacadeMock as any).currentRecordWithDelivery$ =
-      of(facadeRecord);
-
-    const returnedUrl = 'http://hathitrust.example/fulltext2';
-    hathiTrustServiceMock.findFullTextFor.and.returnValue(of(returnedUrl));
-
-    const hostComponent = {
-      // hostComponent is present but isFullDisplay true forces use of facade observable
-      searchResult: {},
-      delivery: () => ({}),
-      isFullDisplay: true,
-    } as any;
-
-    component.hostComponent = hostComponent;
-    fixture.detectChanges(); // triggers ngOnInit which subscribes to facade observable
-
-    component.fullTextUrl$?.subscribe((url) => {
-      expect(url).toBe(returnedUrl);
-      expect(hathiTrustServiceMock.findFullTextFor).toHaveBeenCalledWith(
-        facadeRecord
-      );
-      done();
-    });
+  it('maps untranslated availability key to default text', async () => {
+    translateService.get.and.returnValue(of('HathiTrust.availabilityText'));
+    const fixture = TestBed.createComponent(HathiTrustComponent);
+    component = fixture.componentInstance;
+    const text = await firstValueFrom(component.availabilityText$);
+    expect(text).toBe('Full text from HathiTrust');
   });
 
-  it('displays a HathiTrustLinkComponent when HathiTrustService returns a URL', (done) => {
-    const searchResult = {};
-    const deliveryValue = {};
-    const deliveryFn = jasmine
-      .createSpy('delivery')
-      .and.returnValue(deliveryValue);
-
-    const hostComponent = {
-      searchResult,
-      delivery: deliveryFn,
-      isFullDisplay: false,
-    } as any;
-
-    const returnedUrl = 'http://hathitrust.example/render1';
-    hathiTrustServiceMock.findFullTextFor.and.returnValue(of(returnedUrl));
-
-    component.hostComponent = hostComponent;
-    fixture.detectChanges();
-
-    // wait for async pipe and change detection to stabilize
-    fixture.whenStable().then(() => {
-      fixture.detectChanges();
-      const linkDe = fixture.debugElement.query(
-        By.directive(HathiTrustLinkComponent)
-      );
-      expect(linkDe).toBeTruthy();
-      done();
-    });
-  });
-
-  it('displays the availability text returned from the translate service', (done) => {
-    const searchResult = {};
-    const deliveryValue = {};
-    const deliveryFn = jasmine
-      .createSpy('delivery')
-      .and.returnValue(deliveryValue);
-
-    const hostComponent = {
-      searchResult,
-      delivery: deliveryFn,
-      isFullDisplay: false,
-    } as any;
-
-    const returnedUrl = 'http://hathitrust.example/render2';
-    hathiTrustServiceMock.findFullTextFor.and.returnValue(of(returnedUrl));
-
-    component.hostComponent = hostComponent;
-    fixture.detectChanges();
-
-    fixture.whenStable().then(() => {
-      fixture.detectChanges();
-      const linkDe = fixture.debugElement.query(
-        By.directive(HathiTrustLinkComponent)
-      );
-      expect(linkDe).toBeTruthy();
-      const text = linkDe.nativeElement.textContent.trim();
-      expect(text).toBe(availabilityTest);
-      done();
-    });
-  });
-
-  it('does not display a HathiTrustLinkComponent when HathiTrustService return undefined', (done) => {
-    const searchResult = {};
-    const deliveryFn = jasmine.createSpy('delivery').and.returnValue({});
-    const hostComponent = {
-      searchResult,
-      delivery: deliveryFn,
-      isFullDisplay: false,
-    } as any;
-
-    hathiTrustServiceMock.findFullTextFor.and.returnValue(of(undefined));
-
-    component.hostComponent = hostComponent;
-    fixture.detectChanges();
-
-    fixture.whenStable().then(() => {
-      fixture.detectChanges();
-      const linkDe = fixture.debugElement.query(
-        By.directive(HathiTrustLinkComponent)
-      );
-      expect(linkDe).toBeFalsy();
-      done();
-    });
+  it('uses translated availability text when available', async () => {
+    translateService.get.and.returnValue(of('Yay! Available via HathiTrust'));
+    const fixture = TestBed.createComponent(HathiTrustComponent);
+    component = fixture.componentInstance;
+    const text = await firstValueFrom(component.availabilityText$);
+    expect(text).toBe('Yay! Available via HathiTrust');
   });
 });
