@@ -79,3 +79,4 @@ providers: [...providers, provideHttpClient()],
 bootstrap: []
 })
 ```
+4. If you want to override any of the default configuration options, you'll need to modify the defaults in `src/app/hathi-trust/hathi-trust-config/hathi-trust-config.service.ts` instead of providing a JSON config file. 
