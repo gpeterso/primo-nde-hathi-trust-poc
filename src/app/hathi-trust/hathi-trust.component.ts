@@ -3,10 +3,9 @@ import {
   Component,
   inject,
   Input,
-  OnInit,
 } from '@angular/core';
 import { Doc } from './primo-search-result/search.model';
-import { Observable, switchMap, map, tap, iif, combineLatest, defer } from 'rxjs';
+import { Observable, switchMap, map, iif, defer } from 'rxjs';
 import { HathiTrustService } from './hathi-trust.service';
 import { AsyncPipe } from '@angular/common';
 import { SearchResultFacade } from './primo-search-result/search-result.facade';
@@ -39,16 +38,8 @@ export class HathiTrustComponent {
   private searchResultFacade = inject(SearchResultFacade);
   private translateService = inject(TranslateService);
   @Input() hostComponent!: NdeOnlineAvailability;
-  fullTextUrl$: Observable<string | undefined> = this.findFullText();
-  availabilityText$: Observable<string> = this.translateService
-    .get(AVAILABILITY_TEXT_KEY)
-    .pipe(
-      map((translation) => {
-        return translation === AVAILABILITY_TEXT_KEY
-          ? DEFAULT_AVAILABILITY_TEXT
-          : translation;
-      }),
-    );
+  fullTextUrl$ = this.findFullText();
+  availabilityText$ = this.getAvailabilityText();
 
   private findFullText(): Observable<string | undefined> {
     return iif(
@@ -57,6 +48,16 @@ export class HathiTrustComponent {
       defer(() => this.searchResultFacade.getSearchResult(this.recordId)),
     ).pipe(
       switchMap((record) => this.hathiTrustService.findFullTextFor(record)),
+    );
+  }
+
+  private getAvailabilityText(): Observable<string> {
+    return this.translateService.get(AVAILABILITY_TEXT_KEY).pipe(
+      map((translation) => {
+        return translation === AVAILABILITY_TEXT_KEY
+          ? DEFAULT_AVAILABILITY_TEXT
+          : translation;
+      }),
     );
   }
 

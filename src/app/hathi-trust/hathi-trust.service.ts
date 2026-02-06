@@ -13,7 +13,7 @@ import { HathiTrustApiService } from './hathi-trust-api/hathi-trust-api.service'
 })
 export class HathiTrustService {
   private api = inject(HathiTrustApiService);
-  private conifg = inject(HathiTrustConfigService);
+  private config = inject(HathiTrustConfigService);
 
   findFullTextFor(searchResult: Doc) {
     let query: HathiTrustQuery | undefined;
@@ -30,17 +30,17 @@ export class HathiTrustService {
   private isEligible(doc: Doc): boolean {
     return (
       isLocal(doc) &&
-      !(this.conifg.disableWhenAvailableOnline && hasOnlineAvailability(doc)) &&
-      !(this.conifg.disableForJournals && isJournal(doc))
+      !(this.config.disableWhenAvailableOnline && hasOnlineAvailability(doc)) &&
+      !(this.config.disableForJournals && isJournal(doc))
     );
   }
 
   private createQuery(doc: Doc): HathiTrustQuery | undefined {
     const ids: { [key in HathiTrustQueryId]?: string[] } = {};
-    if (this.conifg.matchOnOclc)
+    if (this.config.matchOnOclc)
       ids.oclc = getAddata(doc, 'oclcid').flatMap(oclcFilter);
-    if (this.conifg.matchOnIsbn) [ids.isbn] = getAddata(doc, 'isbn');
-    if (this.conifg.matchOnIssn) [ids.issn] = getAddata(doc, 'issn');
+    if (this.config.matchOnIsbn) [ids.isbn] = getAddata(doc, 'isbn');
+    if (this.config.matchOnIssn) [ids.issn] = getAddata(doc, 'issn');
     if (Object.values(ids).some((arr) => arr?.length > 0)) {
       return new HathiTrustQuery(ids);
     } else {

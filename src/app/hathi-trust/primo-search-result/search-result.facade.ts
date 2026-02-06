@@ -20,6 +20,9 @@ import { Doc } from './search.model';
 export class SearchResultFacade {
   private store = inject(Store);
 
+  /**
+   * The current full display record with delivery data.
+   */
   readonly currentFullDisplay$: Observable<Doc> = this.store
     .select(selectFullDisplayWithDelivery)
     .pipe(
@@ -27,6 +30,9 @@ export class SearchResultFacade {
       distinctUntilChanged(),
     );
 
+  /**
+   * Get a search result by its record ID, including delivery data.
+   */
   getSearchResult(id: string): Observable<Doc> {
     return combineLatest({
       searchEntities: this.store.select(selectSearchEntities),
